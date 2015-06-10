@@ -125,5 +125,6 @@ class RetrieverClass
     RetrieverClass(String x)
     {
         youTubeSlug=x;
+        System.out.print(youTubeSlug);
     }
 }
