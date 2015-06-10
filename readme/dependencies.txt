@@ -1,0 +1,53 @@
+1. First of all you need to go to https://developers.google.com/resources/api-libraries/download/youtube/v3/java
+
+Unzip this file and then include the main directory and the libs folder as an decencies through your IDE.
+
+I have used IntelliJ IDEA and this is the final dependency screen which you should see.
+
+http://prntscr.com/7f81fo
+
+Steps for adding external jars in IntelliJ IDEA:
+Project Structure ( CTRL + SHIFT + ALT + S on Windows/Linux, ? + ; on Mac OS X)
+Select Modules at the left panel.
+Dependencies tab.
+Add... ? Project Library ? Attach Jar.
+Add... ? Directory ? Attach Directory.
+
+
+2. Now you need to get yourself one of these API Keys to use Google's services.
+
+You need to go to Google's Developer Console
+https://console.developers.google.com/
+
+Sign up using your Google Profile
+
+Create a Project
+
+Under APIs & Auth on the left hand menu, go to APIs
+
+Locate YouTube Data API
+
+Enable it
+
+Now click on Credentials under the same menu
+
+This application just needs to search YouTube, so we don't need OAuth here.
+
+Create a new Key under Public API access
+
+Use a Server Application and allow all IPs. This shall do for us.
+
+Take the API Key and use it in your application directory or for security you can out it under a file in your src.
+
+The way I have done is I have a file called youtube.properties under src, which contains this.
+
+youtube.apikey=YOUR_SIMPLE_API_KEY_HERE
+
+The code is configured to setup your API Key from this location
+
+This is how the External Libraries look for my Project: http://prntscr.com/7f83ns
+
+This is the project structure in case you need to refer: http://prntscr.com/7f83z0
+
+
+
