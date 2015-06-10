@@ -66,7 +66,10 @@ public class Main
             m.find();
             String artist = currentLine.substring(m.start(), currentLine.indexOf('~'));
             String song = currentLine.substring(currentLine.lastIndexOf('~') + 1);
+            System.out.println("Current Song = "+artist+" - "+song);
             YouTubeSearch.setter(artist, song);
+            if(i==50)
+                break;
         }
     }
 }
@@ -75,8 +78,41 @@ class YouTubeSearch
 {
     private static final String PROPERTIES_FILENAME = "youtube.properties";
     private static final long NUMBER_OF_VIDEOS_RETURNED = 1;
+    private static String Artist;
+    private static String Title;
+    private static String queryTerm;
 
-    static void setter(String ARTIST,String TITLE) throws IOException, InterruptedException
+    static void setter(String ARTIST, String TITLE) throws IOException, InterruptedException
+    {
+        Artist=ARTIST;
+        Title=TITLE;
+        queryTerm = Artist.concat(" - ").concat(Title);
+        SearchResult retrievedVideo = YouTubeSearch("viewcount");
+        ResourceId rId = retrievedVideo.getId();
+        String youTubeTitle=retrievedVideo.getSnippet().getTitle();
+        if(checkTitle(youTubeTitle, TITLE))
+        {
+            new RetrieverClass(rId.getVideoId(),queryTerm);
+        }
+        else
+        {
+            System.out.println("YouTube Results Sorted by ViewCount failed to give desired result, trying Sorted by Relevance");
+            retrievedVideo = YouTubeSearch("relevance");
+            rId = retrievedVideo.getId();
+            youTubeTitle=retrievedVideo.getSnippet().getTitle();
+            if(checkTitle(youTubeTitle, TITLE))
+            {
+                new RetrieverClass(rId.getVideoId(),queryTerm);
+            }
+            else
+            {
+                System.out.println("Oops.. YouTube Search did not return any results for "+queryTerm);
+                System.out.println();
+            }
+        }
+    }
+
+    private static SearchResult YouTubeSearch(String Order) throws IOException
     {
         Properties properties = new Properties();
         InputStream in = YouTubeSearch.class.getResourceAsStream("/" + PROPERTIES_FILENAME);
@@ -88,7 +124,6 @@ class YouTubeSearch
             }
         }).setApplicationName("themp3catcher").build();
 
-        String queryTerm = ARTIST.concat(" - ").concat(TITLE);
         YouTube.Search.List search = youtube.search().list("id,snippet");
         String apiKey = properties.getProperty("youtube.apikey");
         search.setKey(apiKey);
@@ -96,27 +131,20 @@ class YouTubeSearch
         search.setType("video");
         search.setFields("items(id/kind,id/videoId,snippet/title)");
         search.setMaxResults(NUMBER_OF_VIDEOS_RETURNED);
-        search.setOrder("viewcount");
+        search.setOrder(Order);
 
         SearchListResponse searchResponse = search.execute();
         List<SearchResult> searchResultList = searchResponse.getItems();
         Iterator<SearchResult> iteratorSearchResults=searchResultList.iterator();
-        SearchResult singleVideo = iteratorSearchResults.next();
-        ResourceId rId = singleVideo.getId();
-        String youTubeTitle=singleVideo.getSnippet().getTitle();
-
-        if(checkResourceKind(rId)&&checkTitle(youTubeTitle, TITLE))
-        {
-            new RetrieverClass(rId.getVideoId(),queryTerm);
-        }
-        else
-        {
-            System.out.println("Oops.. YouTube Search did not return any results for "+queryTerm);
-        }
+        return iteratorSearchResults.next();
     }
 
     private static boolean checkTitle(String youTubeTitle, String title)
     {
+        if(youTubeTitle.contains("&"))
+        {
+            youTubeTitle=youTubeTitle.replace("&","and");
+        }
         return youTubeTitle.contains(title);
     }
 
@@ -147,6 +175,7 @@ class RetrieverClass
         this.fileName=y;
         this.downloadFile=new File("C:\\Users\\"+System.getProperty("user.name")+"\\Music\\"+fileName+".mp3");
         retrieveDownloadURL();
+        int d = (int) (Math.random() * 100);
     }
 
     private void retrieveDownloadURL()
@@ -190,13 +219,22 @@ class RetrieverClass
         UserAgent downloader=new UserAgent();
         try
         {
+            System.out.println("Trying to download "+fileName+" from YouTube");
             downloader.download(downloadUrl,downloadFile);
             return true;
         }
         catch (ResponseException e)
         {
-            e.printStackTrace();
-            return false;
+            try
+            {
+                System.out.println("Trying to download " + fileName + " from YouTube");
+                downloader.download(downloadUrl,downloadFile);
+                return true;
+            }
+            catch (ResponseException e1)
+            {
+                return false;
+            }
         }
     }
 
@@ -206,9 +244,11 @@ class RetrieverClass
         {
             case 0:
                 System.out.println("Successfully downloaded "+fileName+" at "+downloadFile);
+                System.out.println();
                 break;
             case 1:
-                System.out.println("There seem to be an error with your connection");
+                System.out.println("There seems to be an error with your connection. Try again with a different song");
+                System.out.println();
                 break;
         }
     }
