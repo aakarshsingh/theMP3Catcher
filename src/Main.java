@@ -1,5 +1,4 @@
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -16,6 +15,10 @@ import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.*;
 
+import com.jaunt.Element;
+import com.jaunt.JauntException;
+import com.jaunt.ResponseException;
+import com.jaunt.UserAgent;
 
 /**
  * Reads a text file with this formatting <id> <Artist>~~~<Title>
@@ -46,10 +49,12 @@ import com.google.api.services.youtube.model.*;
  *
  * Read readme/dependencies.txt to understand how to get this code working
  *
+ * Further edits above the Retriever Class
+ *
  */
 public class Main
 {
-    public static void main(String[] args) throws IOException
+    public static void main(String[] args) throws IOException, InterruptedException
     {
         List<String> lines = Files.readAllLines(Paths.get(args[0]), Charset.defaultCharset());
         int numberOfFiles = lines.size();
@@ -62,8 +67,6 @@ public class Main
             String artist = currentLine.substring(m.start(), currentLine.indexOf('~'));
             String song = currentLine.substring(currentLine.lastIndexOf('~') + 1);
             YouTubeSearch.setter(artist, song);
-            if(i==1)
-                break;
         }
     }
 }
@@ -73,7 +76,7 @@ class YouTubeSearch
     private static final String PROPERTIES_FILENAME = "youtube.properties";
     private static final long NUMBER_OF_VIDEOS_RETURNED = 1;
 
-    static void setter(String ARTIST,String TITLE) throws IOException
+    static void setter(String ARTIST,String TITLE) throws IOException, InterruptedException
     {
         Properties properties = new Properties();
         InputStream in = YouTubeSearch.class.getResourceAsStream("/" + PROPERTIES_FILENAME);
@@ -104,7 +107,11 @@ class YouTubeSearch
 
         if(checkResourceKind(rId)&&checkTitle(youTubeTitle, TITLE))
         {
-            new RetrieverClass(rId.getVideoId());
+            new RetrieverClass(rId.getVideoId(),queryTerm);
+        }
+        else
+        {
+            System.out.println("Oops.. YouTube Search did not return any results for "+queryTerm);
         }
     }
 
@@ -119,11 +126,90 @@ class YouTubeSearch
     }
 }
 
+/**
+ * Using http://jaunt-api.com/ for this class
+ *
+ * Added jaunt1.0.jar as an External Library
+ *
+ * Using youtubeinmp3.com for downloading the MP3 File
+ *
+ *
+ */
 class RetrieverClass
 {
     private static String youTubeSlug;
-    RetrieverClass(String x)
+    private final String fileName;
+    private final File downloadFile;
+
+    RetrieverClass(String x, String y) throws InterruptedException
     {
-        youTubeSlug=x;
+        this.youTubeSlug = x;
+        this.fileName=y;
+        this.downloadFile=new File("C:\\Users\\"+System.getProperty("user.name")+"\\Music\\"+fileName+".mp3");
+        retrieveDownloadURL();
+    }
+
+    private void retrieveDownloadURL()
+    {
+        UserAgent userAgent = new UserAgent();
+        try
+        {
+            String videoURL = "http://www.youtube.com/watch?v=" + youTubeSlug;
+            String url = "http://youtubeinmp3.com/download/?video=http://youtubeinmp3.com/download/?video=" + videoURL;
+            userAgent.visit(url);
+            String downloadUrl="";
+            com.jaunt.Elements anchor = userAgent.doc.findEach("<a>");
+            int i = 0;
+            for (Element e : anchor)
+            {
+                i++;
+                if (i == 2)
+                {
+                    downloadUrl = e.getAt("href");
+                    break;
+                }
+            }
+            if(nowDownloadTheFile(downloadUrl))
+            {
+                printFinalMessage(0);
+            }
+            else
+            {
+                printFinalMessage(1);
+            }
+        }
+        catch (JauntException e)
+        {
+            System.out.println(e);
+        }
+
+    }
+
+    private boolean nowDownloadTheFile(String downloadUrl)
+    {
+        UserAgent downloader=new UserAgent();
+        try
+        {
+            downloader.download(downloadUrl,downloadFile);
+            return true;
+        }
+        catch (ResponseException e)
+        {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private void printFinalMessage(int i)
+    {
+        switch (i)
+        {
+            case 0:
+                System.out.println("Successfully downloaded "+fileName+" at "+downloadFile);
+                break;
+            case 1:
+                System.out.println("There seem to be an error with your connection");
+                break;
+        }
     }
 }
