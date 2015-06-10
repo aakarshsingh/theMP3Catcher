@@ -1,0 +1,12 @@
+#idea files
+*.iml
+
+*.properties
+
+*.txt~
+
+/Dependencies/*
+
+/.idea/*
+
+/out/*
