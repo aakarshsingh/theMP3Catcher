@@ -1,6 +1,6 @@
 1. First of all you need to go to https://developers.google.com/resources/api-libraries/download/youtube/v3/java
 
-Unzip this file and then include the main directory and the libs folder as an decencies through your IDE.
+Unzip this file and then include the main directory and the libs folder as an dependencies through your IDE.
 
 I have used IntelliJ IDEA and this is the final dependency screen which you should see.
 
@@ -48,6 +48,3 @@ The code is configured to setup your API Key from this location
 This is how the External Libraries look for my Project: http://prntscr.com/7f83ns
 
 This is the project structure in case you need to refer: http://prntscr.com/7f83z0
-
-
-
