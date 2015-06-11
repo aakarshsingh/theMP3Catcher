@@ -58,18 +58,15 @@ public class Main
     {
         List<String> lines = Files.readAllLines(Paths.get(args[0]), Charset.defaultCharset());
         int numberOfFiles = lines.size();
-        for (int i = 0; i < numberOfFiles; i++)
+        for (String currentLine : lines)
         {
-            String currentLine = lines.get(i);
             Pattern p = Pattern.compile("\\p{L}");
             Matcher m = p.matcher(currentLine);
             m.find();
             String artist = currentLine.substring(m.start(), currentLine.indexOf('~'));
             String song = currentLine.substring(currentLine.lastIndexOf('~') + 1);
-            System.out.println("Current Song = "+artist+" - "+song);
+            System.out.println("Current Song = " + artist + " - " + song);
             YouTubeSearch.setter(artist, song);
-            if(i==50)
-                break;
         }
     }
 }
@@ -141,12 +138,19 @@ class YouTubeSearch
 
     private static boolean checkTitle(String youTubeTitle, String title)
     {
+        System.out.println("Given Title = "+title+"\tYouTube Title = "+youTubeTitle);
         if(youTubeTitle.contains("&"))
         {
             youTubeTitle=youTubeTitle.replace("&","and");
         }
-        return youTubeTitle.contains(title);
+        return (formatString(youTubeTitle)).contains(formatString(title));
     }
+
+    private static String formatString(String x)
+    {
+        return x.replaceAll("[^A-Za-z0-9]", "").toLowerCase();
+    }
+
 
     private static boolean checkResourceKind(ResourceId rId)
     {
@@ -173,7 +177,7 @@ class RetrieverClass
     {
         this.youTubeSlug = x;
         this.fileName=y;
-        this.downloadFile=new File("C:\\Users\\"+System.getProperty("user.name")+"\\Music\\"+fileName+".mp3");
+        this.downloadFile=new File("C:\\Users\\"+System.getProperty("user.name")+"\\Music\\"+fileName.replaceAll("[^A-Za-z0-9 .[()]'-]", "")+".mp3");
         retrieveDownloadURL();
         int d = (int) (Math.random() * 100);
     }
@@ -220,6 +224,7 @@ class RetrieverClass
         try
         {
             System.out.println("Trying to download "+fileName+" from YouTube");
+            System.out.println("YouTube Link :: "+"http://www.youtube.com/watch?v=" + youTubeSlug);
             downloader.download(downloadUrl,downloadFile);
             return true;
         }
@@ -228,6 +233,7 @@ class RetrieverClass
             try
             {
                 System.out.println("Trying to download " + fileName + " from YouTube");
+                System.out.println("Video Link :: "+"http://www.youtube.com/watch?v=" + youTubeSlug);
                 downloader.download(downloadUrl,downloadFile);
                 return true;
             }
