@@ -1,6 +1,7 @@
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -15,6 +16,13 @@ import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.*;
+import com.jaunt.Element;
+import com.jaunt.JauntException;
+import com.jaunt.ResponseException;
+import com.jaunt.UserAgent;
+import javafx.scene.control.Hyperlink;
+
+import javax.lang.model.util.Elements;
 
 
 /**
@@ -62,9 +70,8 @@ public class Main
             String artist = currentLine.substring(m.start(), currentLine.indexOf('~'));
             String song = currentLine.substring(currentLine.lastIndexOf('~') + 1);
             YouTubeSearch.setter(artist, song);
-            if(i==1)
-                break;
         }
+
     }
 }
 
@@ -104,12 +111,18 @@ class YouTubeSearch
 
         if(checkResourceKind(rId)&&checkTitle(youTubeTitle, TITLE))
         {
-            new RetrieverClass(rId.getVideoId());
+            new RetrieverClass(rId.getVideoId(), queryTerm).getURL();
         }
     }
 
     private static boolean checkTitle(String youTubeTitle, String title)
     {
+        if((title.contains("and") && youTubeTitle.contains("&")) || (title.contains("&") && youTubeTitle.contains("and"))){
+            if(youTubeTitle.contains(title) == false){
+                title = title.replaceAll("&", "and");
+                youTubeTitle = youTubeTitle.replaceAll("&", "and");
+            }
+        }
         return youTubeTitle.contains(title);
     }
 
@@ -122,9 +135,72 @@ class YouTubeSearch
 class RetrieverClass
 {
     private static String youTubeSlug;
-    RetrieverClass(String x)
+    private final String fileName;
+    private final File downloadLocation;
+    RetrieverClass(String x, String y)
     {
-        youTubeSlug=x;
-        System.out.print(youTubeSlug);
+
+        youTubeSlug = x;
+        this.fileName = y;
+        this.downloadLocation=new File("C:\\Users\\"+System.getProperty("user.name")+"\\Music\\"+fileName+".mp3");
     }
+
+  void getURL(){
+        UserAgent userAgent = new UserAgent();
+         try {
+            String videoURL = "http://www.youtube.com/watch?v=" + youTubeSlug;
+            String url = "http://youtubeinmp3.com/download/?video=http://youtubeinmp3.com/download/?video=" + videoURL;
+            userAgent.visit(url);
+            String downloadUrl = new String();
+            com.jaunt.Elements anchor = userAgent.doc.findEach("<a>");
+            int i = 0;
+            for (Element e : anchor) {
+                i++;
+                if (i == 2) {
+                    downloadUrl = e.getAt("href");
+                    System.out.println(downloadUrl);
+                    break;
+                }
+
+            }
+           printFinalMessage(downloadFile(downloadUrl));
+        }
+
+        catch(JauntException e){
+            System.out.println(e);
+        }
+    }
+
+    private int downloadFile(String downloadUrl) {
+    byte[] readBuffer = new byte[4096];
+    int length;
+    try {
+        URLConnection urlConnection = new URL(downloadUrl).openConnection();
+        InputStream inputStream = urlConnection.getInputStream();
+        OutputStream outputStream = new FileOutputStream(downloadLocation);
+        while ((length = inputStream.read(readBuffer)) > 0) {
+            outputStream.write(readBuffer, 0, length);
+        }
+        inputStream.close();
+        outputStream.close();
+        return 0;
+    } catch (IOException e) {
+        System.out.println(e);
+        return 1;
+    }
+}
+
+    private void printFinalMessage(int i)
+    {
+       switch (i)
+        {
+            case 0:
+                System.out.println("Successfully downloaded "+fileName+" at "+downloadLocation);
+                break;
+            case 1:
+                System.out.println("There seem to be an error with your connection");
+                break;
+        }
+    }
+
 }
