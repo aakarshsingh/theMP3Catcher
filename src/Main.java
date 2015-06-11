@@ -172,7 +172,7 @@ class RetrieverClass
     }
 
     private int downloadFile(String downloadUrl) {
-    byte[] readBuffer = new byte[4096];
+    /* byte[] readBuffer = new byte[4096];
     int length;
     try {
         URLConnection urlConnection = new URL(downloadUrl).openConnection();
@@ -188,6 +188,20 @@ class RetrieverClass
         System.out.println(e);
         return 1;
     }
+    */
+        UserAgent downloader=new UserAgent();
+        String name=System.getProperty("user.name");
+        File downloadFile=new File("C:\\Users\\"+name+"\\Music\\"+fileName+".mp3");
+        try
+        {
+            downloader.download(downloadUrl,downloadFile);
+            return 0;
+        }
+        catch (ResponseException e)
+        {
+            e.printStackTrace();
+            return 1;
+        }
 }
 
     private void printFinalMessage(int i)
